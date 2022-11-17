@@ -6,4 +6,4 @@ url = "127.0.0.1"
 level = "info"
 
 [database]
-db_url = "postgres://postgres:postgrespw@localhost:49154/postgres"
+db_url = "postgres://postgres:postgrespw@localhost:49153/postgres"

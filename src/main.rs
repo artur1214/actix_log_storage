@@ -5,7 +5,7 @@ use serde::{Deserialize, Serialize};
 //use csv_async::AsyncWriter;
 mod entities;
 use entities::request::{Entity as RequestTable, ActiveModel};
-use sea_orm::{self, ActiveModelTrait, ActiveValue::NotSet, EntityTrait};
+use sea_orm::{self, ActiveModelTrait, ActiveValue::NotSet, EntityTrait, Set};
 mod settings;
 #[derive(Debug, Serialize, Deserialize)]
 enum DocumentLifecycle {
@@ -107,8 +107,9 @@ struct Request {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-#[serde(transparent)]
+//#[serde(transparent)]
 struct LogsBody {
+    user: String,
     requests: Vec<Request>,
 }
 
@@ -132,6 +133,8 @@ async fn log_to_file(request_body: web::Json<LogsBody>, writer: web::Data<AppSta
             ..Default::default()
         };
         model.set_from_json(serde_json::to_value(row).unwrap()).unwrap();
+        model.user = Set(Some(request_body.user.to_owned()));
+        println!("{:?}", &model);
         all_querries.push(model);
         
         //model.insert(db).await.unwrap();
