@@ -1,11 +1,18 @@
+use std::str::FromStr;
+
 use actix_web::{get, post, web, App, HttpResponse, HttpServer, Responder};
+use chrono::Utc;
 use serde::{Deserialize, Serialize};
 //use tokio::{sync::Mutex, fs::File};
 //use std::error::Error;
-//use csv_async::AsyncWriter;
+//use csv_async::AsyncWriter
+use serde_with::TimestampMilliSeconds;
+use serde_with::formats::Flexible;
+
 mod entities;
 use entities::request::{Entity as RequestTable, ActiveModel};
 use sea_orm::{self, ActiveModelTrait, ActiveValue::NotSet, EntityTrait, Set};
+use sea_orm::prelude::DateTime;
 mod settings;
 #[derive(Debug, Serialize, Deserialize)]
 enum DocumentLifecycle {
@@ -68,6 +75,8 @@ enum ResourceType {
     Other
 }
 
+
+#[serde_with::serde_as]
 #[derive(Debug, Serialize, Deserialize)]
 struct Request {
     data: Option<String>,
@@ -99,7 +108,8 @@ struct Request {
     #[serde(rename(deserialize="tabId"))]
     tab_id: i32,
     #[serde(rename(deserialize="timeStamp"))]
-    time_stamp: f64,
+    #[serde_as(as = "Option<TimestampMilliSeconds<String, Flexible>>")]
+    time_stamp: Option<DateTime>,
     #[serde(rename(deserialize="type"))]
     resoutce_type: ResourceType,
     url: String,
@@ -132,31 +142,21 @@ async fn log_to_file(request_body: web::Json<LogsBody>, writer: web::Data<AppSta
             id: NotSet,
             ..Default::default()
         };
-        model.set_from_json(serde_json::to_value(row).unwrap()).unwrap();
+        let v = serde_json::to_value(row).expect("Error on parse");
+        model.set_from_json(v).expect("error on db parse");
         model.user = Set(Some(request_body.user.to_owned()));
-        println!("{:?}", &model);
+        model.server_time_stamp = Set(DateTime::from_timestamp_millis(Utc::now().timestamp_millis()));
         all_querries.push(model);
-        
-        //model.insert(db).await.unwrap();
-        //println!("{}", serde_json::to_string(row).unwrap());
-        
 
-        //wri.serialize(row).await.expect("Error on serializing");
-        //println!("el {:?}", &wri);
-        //wri.flush().await.expect("Error on flushing");
-        //println!("el {:?}", &wri);
     }
-    RequestTable::insert_many(all_querries).exec(db).await.unwrap();
-    return HttpResponse::Ok().body("body");
+    RequestTable::insert_many(all_querries).exec(db).await.expect("Error on insert DB");
+    return HttpResponse::Ok().body("OK");
 }
 
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    // let mut wtr = csv_async::AsyncWriterBuilder::new()
-    //     .has_headers(true)
-    //     //.create_writer(File::create("file_out.csv").await?)
-    //     .create_serializer(File::create("file_out.csv").await?);
+
     let config = settings::get_config().await.expect("Error while config parse");
     println!("Server must be up. on {}:{}", 
         config.get_string("server.url").unwrap_or("127.0.0.1".to_string()), config.get_int("server.port").unwrap_or(8080)

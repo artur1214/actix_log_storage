@@ -36,9 +36,10 @@ impl MigrationTrait for Migration {
                 .col(ColumnDef::new(Request::StatusCode).integer().null())
                 .col(ColumnDef::new(Request::StatusLine).string().null())
                 .col(ColumnDef::new(Request::TabId).integer().null())
-                .col(ColumnDef::new(Request::TimeStamp).float().null())
+                .col(ColumnDef::new(Request::TimeStamp).timestamp().null())
                 .col(ColumnDef::new(Request::Type).string().null())
                 .col(ColumnDef::new(Request::Url).string().null())
+                .col(ColumnDef::new(Request::ServerTimeStamp).timestamp().null())
                 .to_owned()
             )
             .await
@@ -80,4 +81,5 @@ enum Request {
     TimeStamp,
     Type,
     Url,
+    ServerTimeStamp
 }

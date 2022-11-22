@@ -2,7 +2,10 @@
 
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
+use serde_with::TimestampMilliSeconds;
+use serde_with::formats::Flexible;
 
+#[serde_with::serde_as]
 #[derive(Clone, Debug, PartialEq, DeriveEntityModel, Deserialize, Serialize)]
 #[sea_orm(table_name = "request")]
 pub struct Model {
@@ -26,9 +29,13 @@ pub struct Model {
     pub status_code: Option<i32>,
     pub status_line: Option<String>,
     pub tab_id: Option<i32>,
-    pub time_stamp: Option<f32>,
+
+    #[serde_as(as = "Option<TimestampMilliSeconds<String, Flexible>>")]
+    pub time_stamp: Option<DateTime>,
     pub r#type: Option<String>,
     pub url: Option<String>,
+    #[serde(skip)]
+    pub server_time_stamp: Option<DateTime>,
 }
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]

@@ -77,7 +77,7 @@ pub async fn get_config() -> Result<Config, ConfigError>{
         .set_default("port", "8080")?
         .set_default("host", "127.0.0.1")?
          //builder = builder.add_source(File::new("../../src/config/settings", FileFormat::Json));
-        .add_source(File::new("./src/config/default.toml", FileFormat::Toml));
+        .add_source(File::new("./config/default.toml", FileFormat::Toml));
         return builder.build().await;
     
 }
